@@ -1,6 +1,7 @@
 # 🌟 MahilaMitra
 
 <div align="center">
+<img width="2816" height="1536" alt="Gemini_Generated_Image_h40i2sh40i2sh40i" src="https://github.com/user-attachments/assets/1a922538-81c8-468d-8592-243f4c276a63" />
 
 **Empowering Women Entrepreneurs Through AI-Powered Care Work Recognition**
 
