@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 56% 98%;
+    --foreground: 234 20% 30%;
+    --card: 0 0% 100%;
+    --card-foreground: 234 20% 30%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 234 20% 30%;
+    --primary: 13 68% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 151 23% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 52 56% 91%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 37 82% 75%;
+    --accent-foreground: 234 20% 30%;
+    --destructive: 355 78% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 52 56% 91%;
+    --ring: 13 68% 63%;
+    --chart-1: 13 68% 63%;
+    --chart-2: 151 23% 60%;
+    --chart-3: 37 82% 75%;
+    --chart-4: 234 20% 30%;
+    --chart-5: 355 78% 56%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 0 3% 12%;
+    --foreground: 52 56% 91%;
+    --card: 0 2% 16%;
+    --card-foreground: 52 56% 91%;
+    --popover: 0 2% 16%;
+    --popover-foreground: 52 56% 91%;
+    --primary: 13 68% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 151 23% 60%;
+    --secondary-foreground: 0 3% 12%;
+    --muted: 234 20% 30%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 37 82% 75%;
+    --accent-foreground: 0 3% 12%;
+    --destructive: 0 100% 71%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 24%;
+    --input: 0 2% 16%;
+    --ring: 13 68% 63%;
+    --chart-1: 13 68% 63%;
+    --chart-2: 151 23% 60%;
+    --chart-3: 37 82% 75%;
+    --chart-4: 52 56% 91%;
+    --chart-5: 0 100% 71%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  h1, h2, h3 {
+    font-family: 'Fraunces', serif;
+  }
+}
+
+@layer base {
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+  [data-debug-wrapper="true"] > * {
+    margin-left: inherit;
+    margin-right: inherit;
+    margin-top: inherit;
+    margin-bottom: inherit;
+    padding-left: inherit;
+    padding-right: inherit;
+    padding-top: inherit;
+    padding-bottom: inherit;
+    column-gap: inherit;
+    row-gap: inherit;
+    gap: inherit;
+    border-left-width: inherit;
+    border-right-width: inherit;
+    border-top-width: inherit;
+    border-bottom-width: inherit;
+    border-left-style: inherit;
+    border-right-style: inherit;
+    border-top-style: inherit;
+    border-bottom-style: inherit;
+    border-left-color: inherit;
+    border-right-color: inherit;
+    border-top-color: inherit;
+    border-bottom-color: inherit;
+  }
+}
