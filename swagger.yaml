@@ -1,0 +1,1238 @@
+openapi: 3.0.3
+info:
+  title: SheLeads Backend API
+  description: |
+    A comprehensive API for empowering women through unpaid care work tracking and AI-powered marketing automation.
+    
+    ## Features
+    - **Care Work Tracking**: Log and track unpaid care work with AI verification
+    - **Marketing Automation**: AI-powered content generation for blogs and social media
+    - **Asset Management**: Upload and manage business assets with AWS S3
+    - **Image Generation**: Create images using Runway AI
+    - **Social Media Posting**: Post content to Twitter, Instagram, Facebook, LinkedIn
+    - **Analytics & Metrics**: Track engagement and performance metrics
+  version: 2.0.0
+  contact:
+    name: SheLeads Team
+    email: support@sheleads.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.sheleads.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Profile
+    description: User profile management
+  - name: Work Logging
+    description: Unpaid care work tracking
+  - name: Analytics
+    description: Work analytics and burnout detection
+  - name: Reports
+    description: PDF report generation
+  - name: Business Profile
+    description: Business profile management for marketing automation
+  - name: Content Generation
+    description: AI-powered blog and social media content generation
+  - name: Asset Management
+    description: Upload and manage business assets (images, logos)
+  - name: Image Generation
+    description: AI-powered image generation with Runway
+  - name: Social Media
+    description: Post content to social media platforms
+  - name: Metrics
+    description: Content engagement metrics tracking
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Error message description
+
+    Success:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 65f0987654321fedcba09876
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+        phone:
+          type: string
+          example: +1234567890
+        emergency_contact:
+          type: string
+          example: +0987654321
+        created_at:
+          type: string
+          format: date-time
+
+    BusinessProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        business_name:
+          type: string
+          example: EmpowerHer Crafts
+        industry:
+          type: string
+          example: Handmade Crafts & Jewelry
+        location:
+          type: string
+          example: Mumbai, India
+        description:
+          type: string
+        target_audience:
+          type: string
+        unique_selling_points:
+          type: array
+          items:
+            type: string
+        website:
+          type: string
+          format: uri
+        logo_url:
+          type: string
+          format: uri
+        social_media_handles:
+          type: object
+          additionalProperties:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GeneratedContent:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        business_id:
+          type: string
+        type:
+          type: string
+          enum: [blog, social]
+        status:
+          type: string
+          enum: [draft, generated, posted, failed]
+        title:
+          type: string
+        content:
+          type: string
+        platform:
+          type: string
+          enum: [instagram, linkedin, twitter, facebook]
+        hashtags:
+          type: array
+          items:
+            type: string
+        image_url:
+          type: string
+          format: uri
+        post_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+paths:
+  /auth/signup:
+    post:
+      summary: User signup
+      description: Register a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - phone
+              properties:
+                name:
+                  type: string
+                  example: Jane Doe
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: SecurePass123!
+                phone:
+                  type: string
+                  example: +1234567890
+                emergency_contact:
+                  type: string
+                  example: +0987654321
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          user:
+                            $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user and get JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                password:
+                  type: string
+                  format: password
+                  example: SecurePass123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /profile:
+    get:
+      summary: Get user profile
+      description: Retrieve authenticated user's profile
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /business/profile:
+    post:
+      summary: Create/Update business profile
+      description: Create or update business profile for marketing automation
+      tags:
+        - Business Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - business_name
+                - industry
+              properties:
+                business_name:
+                  type: string
+                  example: EmpowerHer Crafts
+                industry:
+                  type: string
+                  example: Handmade Crafts & Jewelry
+                location:
+                  type: string
+                  example: Mumbai, India
+                description:
+                  type: string
+                  example: Empowering women artisans by selling handcrafted jewelry
+                target_audience:
+                  type: string
+                  example: Women aged 25-45 who appreciate handmade products
+                unique_selling_points:
+                  type: array
+                  items:
+                    type: string
+                  example: ["100% handmade by women artisans", "Eco-friendly materials"]
+                website:
+                  type: string
+                  format: uri
+                  example: https://empowerhercrafts.com
+                social_media_handles:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    instagram: "@empowerhercrafts"
+                    facebook: "EmpowerHerCrafts"
+      responses:
+        '201':
+          description: Business profile created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BusinessProfile'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get business profile
+      description: Retrieve authenticated user's business profile
+      tags:
+        - Business Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Business profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BusinessProfile'
+        '404':
+          description: Business profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete business profile
+      description: Delete authenticated user's business profile
+      tags:
+        - Business Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Business profile deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+
+  /content/blog:
+    post:
+      summary: Generate blog post
+      description: Generate AI-powered blog post based on business profile and topic
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+              properties:
+                topic:
+                  type: string
+                  example: 5 Ways Handmade Jewelry Supports Women Artisans
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                  example: ["handmade jewelry", "women artisans", "sustainable fashion"]
+                tone:
+                  type: string
+                  example: inspiring and educational
+                  default: professional and engaging
+                length:
+                  type: string
+                  enum: [short, medium, long]
+                  example: medium
+                  default: medium
+      responses:
+        '201':
+          description: Blog generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GeneratedContent'
+        '404':
+          description: Business profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /content/social:
+    post:
+      summary: Generate social media posts
+      description: Generate AI-powered social media posts for multiple platforms
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+                - platforms
+              properties:
+                topic:
+                  type: string
+                  example: New Spring Collection Launch
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    enum: [instagram, linkedin, twitter, facebook]
+                  example: ["instagram", "linkedin"]
+                tone:
+                  type: string
+                  example: exciting and engaging
+                  default: engaging and authentic
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["#HandmadeJewelry", "#WomenArtisans"]
+                image_style:
+                  type: string
+                  example: vibrant and colorful
+      responses:
+        '201':
+          description: Social posts generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GeneratedContent'
+
+  /content:
+    get:
+      summary: Get all content
+      description: Retrieve all generated content with optional filtering
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [blog, social]
+          description: Filter by content type
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [instagram, linkedin, twitter, facebook]
+          description: Filter by platform
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, generated, posted, failed]
+          description: Filter by status
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GeneratedContent'
+
+  /content/{id}:
+    get:
+      summary: Get content by ID
+      description: Retrieve a specific piece of content
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GeneratedContent'
+        '404':
+          description: Content not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete content
+      description: Delete a specific piece of content
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      responses:
+        '200':
+          description: Content deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+
+  /content/{id}/status:
+    put:
+      summary: Update content status
+      description: Update the status of content (e.g., mark as posted)
+      tags:
+        - Content Generation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, generated, posted, failed]
+                  example: posted
+                post_url:
+                  type: string
+                  format: uri
+                  example: https://instagram.com/p/ABC123xyz
+      responses:
+        '200':
+          description: Content status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+
+  /content/{id}/generate-image:
+    post:
+      summary: Generate image for content
+      description: Generate an AI-powered image using Runway for a piece of content
+      tags:
+        - Image Generation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - image_prompt
+              properties:
+                image_prompt:
+                  type: string
+                  example: Professional social media image for handmade jewelry business
+                reference_images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  example: ["https://bucket.s3.amazonaws.com/logo.jpg"]
+      responses:
+        '200':
+          description: Image generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          image_url:
+                            type: string
+                            format: uri
+                          local_path:
+                            type: string
+                          content_id:
+                            type: string
+        '500':
+          description: Image generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /content/{id}/post:
+    post:
+      summary: Post content to social media
+      description: Post content to specified social media platforms
+      tags:
+        - Social Media
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - platforms
+              properties:
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    enum: [twitter, instagram, facebook, linkedin]
+                  example: ["twitter", "instagram"]
+                image_path:
+                  type: string
+                  example: /path/to/image.jpg
+      responses:
+        '200':
+          description: Content posted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          post_urls:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            example:
+                              twitter: "https://twitter.com/user/status/123"
+                              instagram: "https://instagram.com/p/ABC123"
+                          errors:
+                            type: object
+                            additionalProperties:
+                              type: string
+        '500':
+          description: Failed to post to social media
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /assets/upload:
+    post:
+      summary: Upload asset
+      description: Upload an asset (image, logo, etc.) to AWS S3
+      tags:
+        - Asset Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: query
+          schema:
+            type: string
+            enum: [logo, item, reference_image, general]
+            default: general
+          description: Type of asset being uploaded
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (jpg, jpeg, png, gif, webp, svg)
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          s3_url:
+                            type: string
+                            format: uri
+                          asset_type:
+                            type: string
+                          filename:
+                            type: string
+                          size:
+                            type: integer
+        '400':
+          description: Invalid file or file too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /assets:
+    get:
+      summary: Get user assets
+      description: Retrieve user's uploaded assets from S3
+      tags:
+        - Asset Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: query
+          schema:
+            type: string
+            enum: [logo, item, reference_image, general]
+          description: Filter by asset type
+      responses:
+        '200':
+          description: Assets retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          assets:
+                            type: object
+                            additionalProperties:
+                              type: array
+                              items:
+                                type: object
+                          logo_url:
+                            type: string
+                            format: uri
+
+  /metrics:
+    post:
+      summary: Add metrics
+      description: Add or update engagement metrics for a piece of content
+      tags:
+        - Metrics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content_id
+              properties:
+                content_id:
+                  type: string
+                  example: 65f3456789012cdef345678
+                likes:
+                  type: integer
+                  example: 245
+                comments:
+                  type: integer
+                  example: 18
+                shares:
+                  type: integer
+                  example: 32
+                impressions:
+                  type: integer
+                  example: 5420
+                reach:
+                  type: integer
+                  example: 4180
+      responses:
+        '201':
+          description: Metrics added successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          content_id:
+                            type: string
+                          platform:
+                            type: string
+                          likes:
+                            type: integer
+                          comments:
+                            type: integer
+                          shares:
+                            type: integer
+                          impressions:
+                            type: integer
+                          reach:
+                            type: integer
+                          engagement_rate:
+                            type: number
+                            format: float
+                          collected_at:
+                            type: string
+                            format: date-time
+
+  /metrics/content/{content_id}:
+    get:
+      summary: Get metrics by content ID
+      description: Retrieve all metrics for a specific piece of content
+      tags:
+        - Metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: content_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Content ID
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+
+  /metrics/aggregated:
+    get:
+      summary: Get aggregated metrics
+      description: Get aggregated metrics across all content and platforms
+      tags:
+        - Metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Aggregated metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          total_posts:
+                            type: integer
+                          total_likes:
+                            type: integer
+                          total_comments:
+                            type: integer
+                          total_shares:
+                            type: integer
+                          total_impressions:
+                            type: integer
+                          total_reach:
+                            type: integer
+                          avg_engagement_rate:
+                            type: number
+                            format: float
+                          by_platform:
+                            type: array
+                            items:
+                              type: object
+
+  /social-posting/trigger:
+    post:
+      summary: Trigger social media posting
+      description: Generate image and post content to multiple social media platforms
+      tags:
+        - Social Media
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - platforms
+              properties:
+                text:
+                  type: string
+                  example: "Excited to announce our new Spring Collection! 🌸 Handcrafted with love by women artisans. #HandmadeJewelry #WomenEmpowerment"
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    enum: [twitter, instagram, facebook, linkedin]
+                  example: ["twitter", "instagram"]
+                image_prompt:
+                  type: string
+                  example: "Professional social media image showcasing handmade jewelry spring collection, vibrant colors, elegant display"
+                reference_images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  description: S3 URLs of reference images for AI generation
+                  example: ["https://bucket.s3.amazonaws.com/logo.jpg"]
+      responses:
+        '200':
+          description: Content posted successfully to social media
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          image_url:
+                            type: string
+                            format: uri
+                            description: URL of the generated image
+                          post_urls:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: URLs of posts on each platform
+                            example:
+                              twitter: "https://twitter.com/user/status/123456789"
+                              instagram: "https://www.instagram.com/p/ABC123xyz/"
+                          errors:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: Any errors encountered per platform
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Business profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to generate image or post to social media
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /work/log:
+    post:
+      summary: Log work entry
+      description: Log unpaid care work with AI verification
+      tags:
+        - Work Logging
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - category
+                - hours
+                - image
+              properties:
+                category:
+                  type: string
+                  enum: [cooking, cleaning, childcare, eldercare, laundry, shopping, gardening, home_maintenance, other]
+                  example: cooking
+                hours:
+                  type: number
+                  format: float
+                  minimum: 0.1
+                  maximum: 24
+                  example: 2.5
+                description:
+                  type: string
+                  example: Prepared lunch and dinner for family
+                image:
+                  type: string
+                  format: binary
+                  description: Image of the work being done
+      responses:
+        '201':
+          description: Work logged successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          points_earned:
+                            type: integer
+                          ai_verification:
+                            type: object
+                          burnout_alert:
+                            type: boolean
+
+  /analytics/summary:
+    get:
+      summary: Get analytics summary
+      description: Get summary of work hours, points, and categories
+      tags:
+        - Analytics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          total_hours:
+                            type: number
+                          total_points:
+                            type: integer
+                          by_category:
+                            type: array
+                            items:
+                              type: object
+
+  /reports/monthly:
+    get:
+      summary: Generate monthly PDF report
+      description: Generate and download monthly work report as PDF
+      tags:
+        - Reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Month (1-12)
+        - name: year
+          in: query
+          schema:
+            type: integer
+          description: Year
+      responses:
+        '200':
+          description: PDF report generated successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
